@@ -13,19 +13,49 @@
     <div id="container">
         <div id="map"></div>
         <div id="sidebar">
-            <div id="title" class="center-div"><h2>Transit Priority</h2></div>
+            <div id="title" class="center-div shift-left"><h2>Transit Priority</h2></div>
             <div id="od-title" class="row">
                 <div class="col-xs-6 center-text"><h3>Origin</h3></div>
                 <div class="col-xs-6 center-text"><h3>Destination</h3></div>
             </div>
-            <div id="od-text" class="row">
-                <div class="col-xs-6 center-text"><h4 id="display-origin"></h4></div>
-                <div class="col-xs-6 center-text"><h4 id="display-destination"></h4></div>
+            <div id="od-text" class="row shift-left">
+                <div class="col-xs-6 center-text"><h4 id="display-origin">- -</h4></div>
+                <div class="col-xs-6 center-text"><h4 id="display-destination">- -</h4></div>
              </div>
-            <div id="chart-container">
-                <div id="chart-am" class="row"></div>
-                <div id="chart-mid" class="row"></div>
-                <div id="chart-pm" class="row"></div>
+            <div id="chart-container" class="shift-left">
+                <div id="chart-am" class="row">
+                    <div class="col-xs-4">
+                        <h3 id="am-name">AM Peak</h3>
+                    </div>
+                    <div class="col-xs-4">
+                        <h3 id="am-scenario-1">- -</h3>
+                    </div>
+                    <div class="col-xs-4">
+                        <h3 id="am-scenario-2">- -</h3>
+                    </div>
+                </div>
+                <div id="chart-mid" class="row">
+                    <div class="col-xs-4">
+                        <h3 id="mid-name">Midday</h3>
+                    </div>
+                    <div class="col-xs-4">
+                        <h3 id="mid-scenario-1">- -</h3>
+                    </div>
+                    <div class="col-xs-4">
+                        <h3 id="mid-scenario-2">- -</h3>
+                    </div>
+                </div>
+                <div id="chart-pm" class="row">
+                    <div class="col-xs-4">
+                        <h3 id="pm-name">PM Peak</h3>
+                    </div>
+                    <div class="col-xs-4">
+                        <h3 id="pm-scenario-1">- -</h3>
+                    </div>
+                    <div class="col-xs-4">
+                        <h3 id="pm-scenario-2">- -</h3>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

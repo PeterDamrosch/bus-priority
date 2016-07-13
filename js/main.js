@@ -108,9 +108,7 @@ var onEachFeatureStop = function (feature, layer) {
             selectedOriginId = clicked_id;
         }
 
-        // New styles after updating selected origin/desination logic
-        updateStopStyle();
-        updateSidebar();
+        updateVisualization();
     })
 };
 
@@ -127,42 +125,73 @@ var updateStopStyle = function() {
 }
 
 
+/////// 2. The main function called when a selection changes /////////
+
+var updateVisualization = function () {
+
+    // Update selected style
+    updateStopStyle();
+
+    // Update displayed names
+    updateODNames();
+
+    // Update travel time boxes
+    updateTravelTimes()
+}
 
 
-//////// 2. Displaying Origin and Destination in Side Bar ////////////
+
+//////// 3. Displaying Origin and Destination in Side Bar ////////////
 
 var updateODNames = function () {
     if (selectedOriginId) {
         var originName = gtfsData[selectedOriginId].stop_name;
         $('#display-origin').html(originName)
     } else {
-        $('#display-origin').html("")
+        $('#display-origin').html("- -")
     }
     if (selectedDestinationId) {
         var desinationName = gtfsData[selectedDestinationId].stop_name;
         $('#display-destination').html(desinationName)
     } else {
-        $('#display-destination').html("")
+        $('#display-destination').html("- -")
+    }
+};
+
+
+
+//////////// 4. Displaying Travel Time Boxes ///////////////
+
+// Global travel time variables
+var scenario_1_am = null,
+    scenario_1_mid = null,
+    scenario_1_pm = null,
+    scenario_2_am = null,
+    scenario_2_mid = null,
+    scenario_2_pm = null;
+
+var updateTravelTimeBoxes = function() {
+    if (selectedOriginId || selectedDestinationId) {
+        $('#am-scenario-1').html(scenario_1_am);
+        $('#am-scenario-2').html(scenario_2_am);
+        $('#mid-scenario-1').html(scenario_1_mid);
+        $('#mid-scenario-2').html(scenario_2_mid);
+        $('#pm-scenario-1').html(scenario_1_pm);
+        $('#pm-scenario-2').html(scenario_1_pm);
+    } else {
+        $('#am-scenario-1').html("- -");
+        $('#am-scenario-2').html("- -");
+        $('#mid-scenario-1').html("- -");
+        $('#mid-scenario-2').html("- -");
+        $('#pm-scenario-1').html("- -");
+        $('#pm-scenario-2').html("- -");
     }
 };
 
 
 
 
-
-
-//////////// 3. Create Time Charts (initially empty) ///////////////
-
-
-// Global travel time variables
-var gtfsTimeAM = null,
-    gtfsTimeMid = null,
-    gtfsTimePM = null,
-    scenario1TimeAM = null,
-    scenario1TimeMid = null,
-    scenario1TimePM = null;
-
-
+/*
 var createTimeChart = function(barValues, barNames, chartName, htmlSelector) {
 
     // Define constants
@@ -223,14 +252,15 @@ createTimeChart([5,10], [],"AM Peak","#chart-am" );
 createTimeChart([4,3], [],"Midday","#chart-mid" );
 createTimeChart([6,10], [],"PM Peak","#chart-pm" );
 
+*/
 
 
-///////////// 4. Update Travel Times //////////////
+///////////// 5. Calculating Travel Times //////////////
 
 var updateTravelTimes = function() {
 
     // Function for calculating time difference between origin and destination
-    // Inputs are ("schedule", "scenario1") and time period ("am", "mid", "pm")
+    // Inputs are ("schedule", "scenario_2_") and time period ("am", "mid", "pm")
     var timeDifference = function(scenario, period) {
         var column = scenario + "_" + period;
         var origin = gtfsData[selectedOriginId][column];
@@ -242,41 +272,42 @@ var updateTravelTimes = function() {
     if (selectedOriginId && selectedDestinationId) {
 
         // Calculate travel times based on origin and destination, store results in globals
-        gtfsTimeAM = timeDifference("schedule", "am");
-        gtfsTimeMid = timeDifference("schedule", "mid");
-        gtfsTimePM = timeDifference("schedule", "pm");
+        scenario_1_am = timeDifference("scenario_1", "am");
+        scenario_1_mid = timeDifference("scenario_1", "mid");
+        scenario_1_pm = timeDifference("scenario_1", "pm");
 
-        // Calculate scenario1 times
-        scenario1TimeAM = timeDifference("scenario1", "am");
-        scenario1TimeMid = timeDifference("scenario1", "mid");
-        scenario1TimePM = timeDifference("scenario1", "pm");
+        // Calculate scenario_2_ times
+        scenario_2_am = timeDifference("scenario_2", "am");
+        scenario_2_mid = timeDifference("scenario_2", "mid");
+        scenario_2_pm = timeDifference("scenario_2", "pm");
 
-        console.log("Schedule am: " + gtfsTimeAM + ", Scenario1: " + scenario1TimeAM);
-        console.log("Schedule mid: " + gtfsTimeMid + ", Scenario1: " + scenario1TimeMid);
-        console.log("Schedule pm: " + gtfsTimePM + ", Scenario1: " + scenario1TimePM);
+
+        /*
+        console.log("scenario_1 am: " + scenario_1_AM + ", Scenario2: " + scenario_2_TimeAM);
+        console.log("scenario_1 mid: " + scenario_1_Mid + ", Scenario2: " + scenario_2_TimeMid);
+        console.log("scenario_1 pm: " + scenario_1_PM + ", Scenario2: " + scenario_2_TimePM);
+
 
         // Call updateBarGraph passing in arrays and labels
-        var barValuesAm = [gtfsTimeAM, scenario1TimeAM],
-            barValuesMid = [gtfsTimeMid, scenario1TimeMid],
-            barValuesPM = [gtfsTimePM, scenario1TimePM],
+        var barValuesAm = [scenario_1_AM, scenario_2_TimeAM],
+            barValuesMid = [scenario_1_Mid, scenario_2_TimeMid],
+            barValuesPM = [scenario_1_PM, scenario_2_TimePM],
             barNames = ["Schedule", "Scenario 1"]
 
         //updateBarGraph(barValuesAm, barNames, "AM Peak", "#chart-am");
         //updateBarGraph(barValuesMid, barNames, "Midday", "#chart-mid");
         //updateBarGraph(barValuesPM, barNames, "PM Peak", "#chart-pm");
+        */
+
+        updateTravelTimeBoxes();
     }
 };
 
 
-/////// The main function called when a selection changes /////////
-var updateSidebar = function () {
-    updateODNames();
-}
 
 
 
-
-///////////// Prep D3 Data ///////////////
+///////////// 6. Prep D3 Data ///////////////
 
 var gtfsData = null;
 d3.csv("data/stops1_random_scenarios.csv", function(error, data) {
@@ -293,12 +324,12 @@ d3.csv("data/stops1_random_scenarios.csv", function(error, data) {
         d.stop_id = +d.stop_id;
 
         // Convert strings to datetime objects
-        d.schedule_am = parser(d.schedule_am);
-        d.schedule_mid = parser(d.schedule_mid);
-        d.schedule_pm = parser(d.schedule_pm);
-        d.scenario1_am = parser(d.scenario1_am);
-        d.scenario1_mid = parser(d.scenario1_mid);
-        d.scenario1_pm = parser(d.scenario1_pm);
+        d.scenario_1_am = parser(d.schedule_am);
+        d.scenario_1_mid = parser(d.schedule_mid);
+        d.scenario_1_pm = parser(d.schedule_pm);
+        d.scenario_2_am = parser(d.scenario1_am);
+        d.scenario_2_mid = parser(d.scenario1_mid);
+        d.scenario_2_pm = parser(d.scenario1_pm);
 
         // Add object to searchable dictionary
         stopTimeData[d.stop_id] = d;
@@ -306,6 +337,6 @@ d3.csv("data/stops1_random_scenarios.csv", function(error, data) {
 
     console.log(stopTimeData);
 
-    // set global gtfsTimeData to this stopTimeData
+    // set global gtfsData to this stopTimeData
     gtfsData = stopTimeData;
 });
