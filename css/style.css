@@ -1,0 +1,47 @@
+/* - - - - Main Structural Pieces - - - -*/
+html,body, #container{
+    height:100%;
+    width: 100%;
+    overflow: hidden;
+}
+body {
+    display: block
+}
+
+#map {
+    position: absolute;
+    width: 66%;
+    height: 100%;
+    min-height: 500px;
+}
+
+#sidebar {
+    position: absolute;
+    width: 33%;
+    height: 100%;
+    left: 66%;
+}
+
+
+/* - - - -Sidebar Elements - - - -*/
+.center-div {
+    width: 90%;
+    margin: 0 auto
+}
+
+.center-text {
+    text-align: center;
+}
+
+#title {
+    font-size: 20px;
+    font-weight: bold;
+    margin-top: 20px;
+    text-align: center;
+}
+
+#od-title {
+    margin-top: 10px;
+    text-decoration: underline;
+}
+
