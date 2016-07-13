@@ -45,3 +45,33 @@ body {
     text-decoration: underline;
 }
 
+#od-text {
+    height: 60px;
+}
+
+
+/* - - - - Chart Elements - - - -*/
+
+#chart-container svg {
+    margin-left: 10%;
+    margin-right: 20%;
+    margin-top: 5%;
+}
+
+.bars {
+    fill: #3498DB
+}
+
+.axis path,
+.axis line {
+    fill: none;
+    stroke: grey;
+    shape-rendering: crispEdges;
+}
+
+.axis text {
+    font: 14px sans-serif;
+    color: grey;
+    fill: grey
+}
+
