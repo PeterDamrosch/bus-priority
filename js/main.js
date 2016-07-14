@@ -52,14 +52,15 @@ var busRouteStyle = {
 // Selected subset route style
 var selectdRouteStyle = {
     color: selectStopColor,
-    opacity: 0.6,
+    opacity: 1,
     weight: selectedRouteWeight
 }
 
 
+// Hold route and layer
 var route_1_geojson = null;
-// Add Bus Route - get data using jQuery
 var busRoute = null;
+
 $.getJSON("data/mbta_1_to_dudley.geojson", function(data) {
 
     // Store the raw GeoJSON to use again later
@@ -76,7 +77,7 @@ var neutralStopOptions = {
     fillColor: neutralStopColor,
     fillOpacity: 1,
     opacity: 1,
-    color: routeColor
+    color: routeColor,
 };
 var selectedStopOptions = {
     radius: selectStopRadius,
@@ -87,17 +88,28 @@ var selectedStopOptions = {
     weight: 3
 };
 
-var busStops = null;
+// Function for adding stops
+var busStopsLayer = null;
 
-// Add stops - binding onEachFeatureStop is the key functionality defined below
-$.getJSON("data/stops1_geojson.geojson", function(data) {
-    busStops = L.geoJson(data, {
-        onEachFeature: onEachFeatureStop,
-        pointToLayer: function (feature, latlng) {
-            return L.circleMarker(latlng, neutralStopOptions)
-        }
-    }).addTo(map);
-});
+var addStopsLayer = function() {
+    if(map.hasLayer(busStopsLayer)) {
+        map.removeLayer(busStopsLayer);
+    }
+
+    // Add stops - binding onEachFeatureStop is the key functionality defined below
+    $.getJSON("data/stops1_geojson.geojson", function(data) {
+        busStopsLayer = L.geoJson(data, {
+            onEachFeature: onEachFeatureStop,
+            pointToLayer: function (feature, latlng) {
+                return L.circleMarker(latlng, neutralStopOptions)
+            }
+        }).addTo(map);
+    });
+};
+
+// Call it to begin with
+addStopsLayer();
+
 
 ////////////// 1. Selecting Origin and Destination //////////////
 
@@ -106,6 +118,7 @@ var selectedOriginId = null,
 
 // Update global variables for selectedOriginId/Desination depending on what's already been clicked
 // then it calls the update functions
+
 
 var onEachFeatureStop = function (feature, layer) {
     layer.on("click", function(e) {
@@ -133,7 +146,7 @@ var onEachFeatureStop = function (feature, layer) {
 
 // Two styles - one for if something is "selected", one if it's not
 var updateStopStyle = function() {
-    busStops.eachLayer(function(feature) {
+    busStopsLayer.eachLayer(function(feature) {
         stop_id = feature.feature.properties.stop_id;
         if (stop_id == selectedOriginId || stop_id == selectedDestinationId ) {
             feature.setStyle(selectedStopOptions)
@@ -141,14 +154,17 @@ var updateStopStyle = function() {
             feature.setStyle(neutralStopOptions)
         }
     })
-}
+};
+
+var selectedLineLayer = null;
 
 var updateSelectedRouteLine = function() {
 
-    /* To Do: 1. Load the regular geojson line. 2. slice the line at the index. 3. Display on map. 4. Change a global
-    like "routeOnMap = true" (and first step will need to be remove layer if so) */
-
     if (selectedOriginId && selectedDestinationId) {
+
+        if(map.hasLayer(selectedLineLayer)) {
+            map.removeLayer(selectedLineLayer);
+        }
 
         // Pull out coordinate indices that correspond to those stop locations
         var originIndex = gtfsData[selectedOriginId].line_index,
@@ -163,11 +179,13 @@ var updateSelectedRouteLine = function() {
         selectedLine.features[0].geometry.coordinates = subsetGeometry;
 
         // Add route to map - style defined above with routeStyle
-        var selectedRoute = L.geoJson(selectedLine, {
+        var selectedLineLayer = L.geoJson(selectedLine, {
             style: selectdRouteStyle
-        }).addTo(map)
+        })
+
+        map.addLayer(selectedLineLayer)
     }
-}
+};
 
 
 /////// 3. The main function called when a selection changes /////////
@@ -175,8 +193,8 @@ var updateSelectedRouteLine = function() {
 var updateVisualization = function() {
 
     // Map updates
-    updateStopStyle();
     updateSelectedRouteLine();
+    updateStopStyle();
 
     // Sidebar updates
     updateODNames();

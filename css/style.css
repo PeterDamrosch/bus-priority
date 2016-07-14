@@ -23,6 +23,11 @@ body {
 }
 
 
+/* - - - - - Map Elements - - - - */
+.stops {
+    z-index: 1000;
+}
+
 /* - - - -Sidebar Elements - - - -*/
 
 .shift-left {
