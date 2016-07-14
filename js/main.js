@@ -37,20 +37,35 @@ L.control.layers(baseLayers, null, {position: 'topleft'}).addTo(map);
 // Style and color constants for route and stops
 var routeColor = "#3498DB",
     routeOpacity = 1,
+    selectedRouteWeight = 5,
     selectStopColor = "#E74C3C",
     selectStopRadius = 7,
     neutralStopColor = "white",
     neutralStopRadius = 5.5;
 
-// Bus route sylte
+// Default route style
 var busRouteStyle = {
     color: routeColor,
     opacity: routeOpacity
 }
 
+// Selected subset route style
+var selectdRouteStyle = {
+    color: selectStopColor,
+    opacity: 0.6,
+    weight: selectedRouteWeight
+}
+
+
+var route_1_geojson = null;
 // Add Bus Route - get data using jQuery
 var busRoute = null;
 $.getJSON("data/mbta_1_to_dudley.geojson", function(data) {
+
+    // Store the raw GeoJSON to use again later
+    route_1_geojson = data;
+
+    // Add the static route
     busRoute = L.geoJson(data, {
         style: busRouteStyle
     }).addTo(map)
@@ -112,6 +127,10 @@ var onEachFeatureStop = function (feature, layer) {
     })
 };
 
+
+
+//////////// 2. Update Map Features - Stop and Line //////////////////
+
 // Two styles - one for if something is "selected", one if it's not
 var updateStopStyle = function() {
     busStops.eachLayer(function(feature) {
@@ -124,24 +143,49 @@ var updateStopStyle = function() {
     })
 }
 
+var updateSelectedRouteLine = function() {
 
-/////// 2. The main function called when a selection changes /////////
+    /* To Do: 1. Load the regular geojson line. 2. slice the line at the index. 3. Display on map. 4. Change a global
+    like "routeOnMap = true" (and first step will need to be remove layer if so) */
 
-var updateVisualization = function () {
+    if (selectedOriginId && selectedDestinationId) {
 
-    // Update selected style
-    updateStopStyle();
+        // Pull out coordinate indices that correspond to those stop locations
+        var originIndex = gtfsData[selectedOriginId].line_index,
+            destinationIndex = gtfsData[selectedDestinationId].line_index;
 
-    // Update displayed names
-    updateODNames();
+        // Create a copy of the route
+        var selectedLine = jQuery.extend(true, {}, route_1_geojson);
 
-    // Update travel time boxes
-    updateTravelTimes()
+        // Modify the geometry to have just the subset of the selected route using the indices
+        var lineCoordinates = selectedLine.features[0].geometry.coordinates;
+        var subsetGeometry = lineCoordinates.slice(originIndex, destinationIndex);
+        selectedLine.features[0].geometry.coordinates = subsetGeometry;
+
+        // Add route to map - style defined above with routeStyle
+        var selectedRoute = L.geoJson(selectedLine, {
+            style: selectdRouteStyle
+        }).addTo(map)
+    }
 }
 
 
+/////// 3. The main function called when a selection changes /////////
 
-//////// 3. Displaying Origin and Destination in Side Bar ////////////
+var updateVisualization = function() {
+
+    // Map updates
+    updateStopStyle();
+    updateSelectedRouteLine();
+
+    // Sidebar updates
+    updateODNames();
+    updateTravelTimes()
+};
+
+
+
+//////// 4. Displaying Origin and Destination in Side Bar ////////////
 
 var updateODNames = function () {
     if (selectedOriginId) {
@@ -160,7 +204,7 @@ var updateODNames = function () {
 
 
 
-//////////// 4. Displaying Travel Time Boxes ///////////////
+//////////// 5. Displaying Travel Time Boxes ///////////////
 
 // Global travel time variables
 var scenario_1_am = null,
@@ -177,7 +221,7 @@ var updateTravelTimeBoxes = function() {
         $('#mid-scenario-1').html(scenario_1_mid);
         $('#mid-scenario-2').html(scenario_2_mid);
         $('#pm-scenario-1').html(scenario_1_pm);
-        $('#pm-scenario-2').html(scenario_1_pm);
+        $('#pm-scenario-2').html(scenario_2_pm);
     } else {
         $('#am-scenario-1').html("- -");
         $('#am-scenario-2').html("- -");
@@ -187,7 +231,6 @@ var updateTravelTimeBoxes = function() {
         $('#pm-scenario-2').html("- -");
     }
 };
-
 
 
 
@@ -255,7 +298,9 @@ createTimeChart([6,10], [],"PM Peak","#chart-pm" );
 */
 
 
-///////////// 5. Calculating Travel Times //////////////
+
+
+///////////// 6. Calculating Travel Times //////////////
 
 var updateTravelTimes = function() {
 
@@ -307,10 +352,10 @@ var updateTravelTimes = function() {
 
 
 
-///////////// 6. Prep D3 Data ///////////////
+///////////// 7. Prep D3 Data ///////////////
 
 var gtfsData = null;
-d3.csv("data/stops1_random_scenarios.csv", function(error, data) {
+d3.csv("data/stops1_polyline_index.csv", function(error, data) {
     if (error) throw error;
     console.log(data);
 
@@ -327,9 +372,9 @@ d3.csv("data/stops1_random_scenarios.csv", function(error, data) {
         d.scenario_1_am = parser(d.schedule_am);
         d.scenario_1_mid = parser(d.schedule_mid);
         d.scenario_1_pm = parser(d.schedule_pm);
-        d.scenario_2_am = parser(d.scenario1_am);
-        d.scenario_2_mid = parser(d.scenario1_mid);
-        d.scenario_2_pm = parser(d.scenario1_pm);
+        d.scenario_2_am = parser(d.scenario_2_am);
+        d.scenario_2_mid = parser(d.scenario_2_mid);
+        d.scenario_2_pm = parser(d.scenario_2_pm);
 
         // Add object to searchable dictionary
         stopTimeData[d.stop_id] = d;
