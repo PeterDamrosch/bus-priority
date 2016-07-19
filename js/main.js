@@ -142,32 +142,31 @@ var onEachParentStop = function (feature, layer) {
         if (parentOrigin && parentDestination) {
             assignDirection()
         }
+
+        // NEED TO REORGANIZE WHAT GETS CALLED AFTER SELECTION, EVEN IF ONLY FOR CLEANLINESS
+        updateVisualization();
     })
 };
 
+// Assigns the major globals of gtfsData, selectedOriginId and selectedDestinationId
 var assignDirection = function() {
     var inboundChild_originID = parentOrigin.child_1,
         inboundChild_destinationID = parentDestination.child_1,
+        outboundChild_originID = parentOrigin.child_0,
+        outboundChild_destinationID = parentDestination.child_0,
         inboundChild_originStopSequence = inboundStops[inboundChild_originID].stop_sequence,
         inboundChild_destinationStopSequence = inboundStops[inboundChild_destinationID].stop_sequence;
 
-    var outboundChild_originID = parentOrigin.child_0,
-        outboundChild_destinationID = parentDestination.child_0,
-        outboundChild_originStopSequence = outboundStops[outboundChild_originID].stop_sequence,
-        outboundChild_destinationStopSequence = outboundStops[outboundChild_destinationID].stop_sequence;
-
-
-    console.log("inboundChild_origin: " + inboundChild_originStopSequence);
-    console.log("inboundChild_destination: " + inboundChild_destinationStopSequence);
-    console.log("outboundChild_origin: " + outboundChild_originStopSequence);
-    console.log("outboundChild_destination: " + outboundChild_destinationStopSequence);
     if (inboundChild_destinationStopSequence > inboundChild_originStopSequence) {
         gtfsData = inboundStops;
-        console.log("Verdict: INBOUND")
+        selectedOriginId = inboundChild_originID;
+        selectedDestinationId = inboundChild_destinationID
     } else {
         gtfsData = outboundStops;
-        console.log("Verdict: OUTBOUND")
+        selectedOriginId = outboundChild_originID;
+        selectedDestinationId = outboundChild_destinationID;
     }
+    console.log(gtfsData, selectedOriginId, selectedDestinationId)
 };
 
 /* Old on each feature (ellipsed out July 18)
@@ -199,8 +198,8 @@ var onEachFeatureStop = function (feature, layer) {
 // Two styles - one for if something is "selected", one if it's not
 var updateStopStyle = function() {
     busStopsLayer.eachLayer(function(feature) {
-        stop_id = feature.feature.properties.stop_id;
-        if (stop_id == selectedOriginId || stop_id == selectedDestinationId ) {
+        featureID = feature.feature.properties;
+        if (featureID == parentOrigin || featureID == parentDestination) {
             feature.setStyle(selectedStopOptions)
         } else {
             feature.setStyle(neutralStopOptions)
@@ -209,6 +208,10 @@ var updateStopStyle = function() {
 };
 
 var selectedLineLayer = null;
+
+/* Commented out, need to a) draw a new route line
+b) update indices for both stops0 and stops1 with new line
+c) then figure out the stuff with adding the line and removing it
 
 var updateSelectedRouteLine = function() {
 
@@ -238,6 +241,7 @@ var updateSelectedRouteLine = function() {
         map.addLayer(selectedLineLayer)
     }
 };
+*/
 
 
 /////// 3. The main function called when a selection changes /////////
@@ -245,7 +249,7 @@ var updateSelectedRouteLine = function() {
 var updateVisualization = function() {
 
     // Map updates
-    updateSelectedRouteLine();
+    //updateSelectedRouteLine(); Commented out at the moment
     updateStopStyle();
 
     // Sidebar updates
