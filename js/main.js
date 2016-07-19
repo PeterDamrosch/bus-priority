@@ -96,10 +96,10 @@ var addStopsLayer = function() {
         map.removeLayer(busStopsLayer);
     }
 
-    // Add stops - binding onEachFeatureStop is the key functionality defined below
-    $.getJSON("data/stops1_geojson.geojson", function(data) {
+    // Add parent stops - binding onEachFeatureStop is the key functionality defined below
+    $.getJSON("data/parentStops_route1.geojson", function(data) {
         busStopsLayer = L.geoJson(data, {
-            onEachFeature: onEachFeatureStop,
+            onEachFeature: onEachParentStop,
             pointToLayer: function (feature, latlng) {
                 return L.circleMarker(latlng, neutralStopOptions)
             }
@@ -113,13 +113,64 @@ addStopsLayer();
 
 ////////////// 1. Selecting Origin and Destination //////////////
 
+var parentOrigin = null,
+    parentDestination = null;
+
 var selectedOriginId = null,
     selectedDestinationId = null;
 
 // Update global variables for selectedOriginId/Desination depending on what's already been clicked
 // then it calls the update functions
 
+var onEachParentStop = function (feature, layer) {
+    layer.on("click", function(e) {
+        var clickedParent = feature.properties;
+        if (clickedParent == parentOrigin) {
+            parentOrigin = null;
+        } else if (clickedParent == parentDestination) {
+            parentDestination = null;
+        } else if (!parentOrigin) {
+            parentOrigin = clickedParent
+        } else if (!parentDestination) {
+            parentDestination = clickedParent
+        } else if (parentOrigin && parentDestination) {
+            parentDestination = null;
+            parentOrigin = clickedParent
+        }
 
+        // If at the end of reassigning parent, have a full set, process to see inbound/outbound
+        if (parentOrigin && parentDestination) {
+            assignDirection()
+        }
+    })
+};
+
+var assignDirection = function() {
+    var inboundChild_originID = parentOrigin.child_1,
+        inboundChild_destinationID = parentDestination.child_1,
+        inboundChild_originStopSequence = inboundStops[inboundChild_originID].stop_sequence,
+        inboundChild_destinationStopSequence = inboundStops[inboundChild_destinationID].stop_sequence;
+
+    var outboundChild_originID = parentOrigin.child_0,
+        outboundChild_destinationID = parentDestination.child_0,
+        outboundChild_originStopSequence = outboundStops[outboundChild_originID].stop_sequence,
+        outboundChild_destinationStopSequence = outboundStops[outboundChild_destinationID].stop_sequence;
+
+
+    console.log("inboundChild_origin: " + inboundChild_originStopSequence);
+    console.log("inboundChild_destination: " + inboundChild_destinationStopSequence);
+    console.log("outboundChild_origin: " + outboundChild_originStopSequence);
+    console.log("outboundChild_destination: " + outboundChild_destinationStopSequence);
+    if (inboundChild_destinationStopSequence > inboundChild_originStopSequence) {
+        gtfsData = inboundStops;
+        console.log("Verdict: INBOUND")
+    } else {
+        gtfsData = outboundStops;
+        console.log("Verdict: OUTBOUND")
+    }
+};
+
+/* Old on each feature (ellipsed out July 18)
 var onEachFeatureStop = function (feature, layer) {
     layer.on("click", function(e) {
         var clicked_id = feature.properties.stop_id;
@@ -140,6 +191,7 @@ var onEachFeatureStop = function (feature, layer) {
     })
 };
 
+*/
 
 
 //////////// 2. Update Map Features - Stop and Line //////////////////
@@ -372,11 +424,13 @@ var updateTravelTimes = function() {
 
 ///////////// 7. Prep D3 Data ///////////////
 
+// Globals
 var gtfsData = null;
-d3.csv("data/stops1_polyline_index.csv", function(error, data) {
-    if (error) throw error;
-    console.log(data);
+var inboundStops = null;
+var outboundStops = null;
 
+// Functioning for cleaning data and creating searchable dictionary keyed on stop_id
+var cleanStops = function(data) {
     // Dictionary to make stop times searchable by stop_id
     stopTimeData = {};
     // Parse strings into datetime objects
@@ -398,8 +452,16 @@ d3.csv("data/stops1_polyline_index.csv", function(error, data) {
         stopTimeData[d.stop_id] = d;
     });
 
-    console.log(stopTimeData);
+    return stopTimeData
+};
 
-    // set global gtfsData to this stopTimeData
-    gtfsData = stopTimeData;
+// Load inbound and outbound stops, clean, and set to corresponding global variables
+d3.csv("data/stops1_polyline_index_windows.csv", function(error, dataInbound) {
+    if (error) throw error;
+    inboundStops = cleanStops(dataInbound);
+
+    d3.csv("data/stops0_polyline_index_windows.csv", function(error, dataOutbound) {
+        if (error) throw error;
+        outboundStops = cleanStops(dataOutbound);
+    });
 });
