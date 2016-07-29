@@ -61,7 +61,7 @@ var selectdRouteStyle = {
 var route_1_geojson = null;
 var busRoute = null;
 
-$.getJSON("data/mbta_1_to_dudley.geojson", function(data) {
+$.getJSON("data/route1_full.geojson", function(data) {
 
     // Store the raw GeoJSON to use again later
     route_1_geojson = data;
@@ -423,10 +423,62 @@ var updateTravelTimes = function() {
 };
 
 
+////////// 7. Map Analytics //////////
+
+// Plan for this section
+// A. Globals
+// B. Event listeners that modify the needed globals (zoom, pan)
+// C. Function to process anything that needs to be processed (bounding box)
+// D. Ajax - put state into database (need to design the db schema)
+//      -db schema should inblude I. Map (bounding box + zoom), II. Buttons (selected origin/desination)
+//      III. Additional user info (time, potentially IP address, check out what google analytics has)
+//          - probably won't need (but might want) type of device, type of browser
+
+
+// Initial state
+var zoomLevel = map.getZoom();
+var mapBounds = map.getBounds().toBBoxString(); // form is 'southwest_lng,southwest_lat,northeast_lng,northeast_lat'
+//                                                  there are also a buch of others like getEash() getSouthEast if that's easier
+
+
+// Function to retrieve current map state
+
+var currentMapState = function () {
+    console.log("selectedOrigin: " + selectedOriginId);
+    console.log("selectedDestination: " + selectedDestinationId);
+    console.log("zoomLevel: " + zoomLevel);
+    console.log("mapBounds: ", mapBounds)
+};
+
+
+// Event listener 1 - Zoom
+
+map.on('zoomend', onZoomend);
+function onZoomend() {
+    zoomLevel = map.getZoom();
+
+    // latlngbounds has some handy methods
+    // http://leafletjs.com/reference.html#latlngbounds
+    // toBBoxString() - Returns a string with bounding box coordinates in a 'southwest_lng,southwest_lat,northeast_lng,northeast_lat' format.
+    // Useful for sending requests to web services that return geo data.
+
+    mapBounds = map.getBounds().toBBoxString();
+    currentMapState()
+};
+
+// Event Listener 2 - Move
+
+map.on("moveend", onMoveend);
+function onMoveend() {
+    mapBounds = map.getBounds().toBBoxString();
+    currentMapState()
+};
 
 
 
-///////////// 7. Prep D3 Data ///////////////
+
+
+///////////// 8. Prep D3 Data ///////////////
 
 // Globals
 var gtfsData = null;
@@ -460,11 +512,11 @@ var cleanStops = function(data) {
 };
 
 // Load inbound and outbound stops, clean, and set to corresponding global variables
-d3.csv("data/stops1_polyline_index_windows.csv", function(error, dataInbound) {
+d3.csv("data/stops1_new_index.csv", function(error, dataInbound) {
     if (error) throw error;
     inboundStops = cleanStops(dataInbound);
 
-    d3.csv("data/stops0_polyline_index_windows.csv", function(error, dataOutbound) {
+    d3.csv("data/stops0_new_index.csv", function(error, dataOutbound) {
         if (error) throw error;
         outboundStops = cleanStops(dataOutbound);
     });
