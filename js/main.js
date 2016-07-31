@@ -1,4 +1,4 @@
-//////////////// MAP ////////////////
+//////////////// 1. Initialize map ////////////////
 
 // Base layers
 
@@ -32,7 +32,7 @@ L.control.layers(baseLayers, null, {position: 'topleft'}).addTo(map);
 
 
 
-////////////// Add Basic Bus Route and Stops ////////////
+////////////// 2. Add Basic Bus Route and Stops ////////////
 
 // Style and color constants for route and stops
 var routeColor = "#3498DB",
@@ -111,7 +111,7 @@ var addStopsLayer = function() {
 addStopsLayer();
 
 
-////////////// 1. Selecting Origin and Destination //////////////
+////////////// 3. Selecting Origin and Destination //////////////
 
 var parentOrigin = null,
     parentDestination = null;
@@ -127,14 +127,18 @@ var onEachParentStop = function (feature, layer) {
         var clickedParent = feature.properties;
         if (clickedParent == parentOrigin) {
             parentOrigin = null;
+            selectedOriginId = null;
         } else if (clickedParent == parentDestination) {
             parentDestination = null;
+            selectedDestinationId = null;
         } else if (!parentOrigin) {
             parentOrigin = clickedParent
         } else if (!parentDestination) {
             parentDestination = clickedParent
         } else if (parentOrigin && parentDestination) {
             parentDestination = null;
+            selectedDestinationId = null;
+
             parentOrigin = clickedParent
         }
 
@@ -193,7 +197,7 @@ var onEachFeatureStop = function (feature, layer) {
 */
 
 
-//////////// 2. Update Map Features - Stop and Line //////////////////
+//////////// 4. Update Map Features - Stop and Line //////////////////
 
 // Two styles - one for if something is "selected", one if it's not
 var updateStopStyle = function() {
@@ -244,7 +248,7 @@ var updateSelectedRouteLine = function() {
 */
 
 
-/////// 3. The main function called when a selection changes /////////
+/////// 5. The main function called when a selection changes /////////
 
 var updateVisualization = function() {
 
@@ -259,7 +263,7 @@ var updateVisualization = function() {
 
 
 
-//////// 4. Displaying Origin and Destination in Side Bar ////////////
+//////// 6. Displaying Origin and Destination in Side Bar ////////////
 
 var updateODNames = function () {
     if (selectedOriginId) {
@@ -278,7 +282,7 @@ var updateODNames = function () {
 
 
 
-//////////// 5. Displaying Travel Time Boxes ///////////////
+//////////// 7. Displaying Travel Time Boxes ///////////////
 
 // Global travel time variables
 var scenario_1_am = null,
@@ -374,7 +378,7 @@ createTimeChart([6,10], [],"PM Peak","#chart-pm" );
 
 
 
-///////////// 6. Calculating Travel Times //////////////
+///////////// 8. Calculating Travel Times //////////////
 
 var updateTravelTimes = function() {
 
@@ -419,66 +423,14 @@ var updateTravelTimes = function() {
         */
 
         updateTravelTimeBoxes();
+
+        // Map Analytics to reflect new OD
+        pushMapState("ODSelection")
     }
 };
 
 
-////////// 7. Map Analytics //////////
-
-// Plan for this section
-// A. Globals
-// B. Event listeners that modify the needed globals (zoom, pan)
-// C. Function to process anything that needs to be processed (bounding box)
-// D. Ajax - put state into database (need to design the db schema)
-//      -db schema should inblude I. Map (bounding box + zoom), II. Buttons (selected origin/desination)
-//      III. Additional user info (time, potentially IP address, check out what google analytics has)
-//          - probably won't need (but might want) type of device, type of browser
-
-
-// Initial state
-var zoomLevel = map.getZoom();
-var mapBounds = map.getBounds().toBBoxString(); // form is 'southwest_lng,southwest_lat,northeast_lng,northeast_lat'
-//                                                  there are also a buch of others like getEash() getSouthEast if that's easier
-
-
-// Function to retrieve current map state
-
-var currentMapState = function () {
-    console.log("selectedOrigin: " + selectedOriginId);
-    console.log("selectedDestination: " + selectedDestinationId);
-    console.log("zoomLevel: " + zoomLevel);
-    console.log("mapBounds: ", mapBounds)
-};
-
-
-// Event listener 1 - Zoom
-
-map.on('zoomend', onZoomend);
-function onZoomend() {
-    zoomLevel = map.getZoom();
-
-    // latlngbounds has some handy methods
-    // http://leafletjs.com/reference.html#latlngbounds
-    // toBBoxString() - Returns a string with bounding box coordinates in a 'southwest_lng,southwest_lat,northeast_lng,northeast_lat' format.
-    // Useful for sending requests to web services that return geo data.
-
-    mapBounds = map.getBounds().toBBoxString();
-    currentMapState()
-};
-
-// Event Listener 2 - Move
-
-map.on("moveend", onMoveend);
-function onMoveend() {
-    mapBounds = map.getBounds().toBBoxString();
-    currentMapState()
-};
-
-
-
-
-
-///////////// 8. Prep D3 Data ///////////////
+///////////// 9. Prep D3 Data ///////////////
 
 // Globals
 var gtfsData = null;
@@ -521,3 +473,70 @@ d3.csv("data/stops1_new_index.csv", function(error, dataInbound) {
         outboundStops = cleanStops(dataOutbound);
     });
 });
+
+
+
+
+
+///////// 10. Map Analytics //////////
+
+// Define a user
+function createUserID() {
+    return new Date().getTime() + Math.random().toString(36).substring(0,5)
+}
+
+// Initial state
+var userID = createUserID();
+ga('set', 'dimension1', userID); // session-scoped for GA, only set once, the other dimensions are hit-scope, reset every time
+
+var eventSequence = 0;
+var zoomLevel = map.getZoom();
+var mapBounds = map.getBounds().toBBoxString(); // form is 'southwest_lng,southwest_lat,northeast_lng,northeast_lat'
+//                                                  there are also a bunch of others like getEash() getSouthEast if that's easier
+
+
+// Event Listener 1 - Move/Zoom (every zoom ends with a leaflet moveend event, so map.on("movend") should capture both
+
+map.on("moveend", onMoveend);
+function onMoveend() {
+    zoomLevel = map.getZoom();
+    mapBounds = map.getBounds().toBBoxString();
+    pushMapState("moveend")
+};
+
+
+// Even Listener 3 + 4 are select origin and destination, implemented above
+
+
+
+// Function to push current map state to Google Analytics (right now just logging)
+
+var pushMapState = function (eventType) {
+
+    var eventTime = new Date().getTime();
+    var eventType = eventType;
+
+    ga('set', 'dimension2', eventTime);
+    ga('set', 'dimension3', eventType);
+    ga('set', 'dimension4', eventSequence);
+    ga('set', 'dimension5', zoomLevel);
+    ga('set', 'dimension6', mapBounds);
+    ga('set', 'dimension7', selectedOriginId);
+    ga('set', 'dimension8', selectedDestinationId);
+
+    ga('send', 'event', 'controlTool', 'mapInteraction');
+
+    // Console logs can be deleted
+    console.log("UserID: " + userID);
+    console.log("eventTime: " + eventTime);
+    console.log("eventType: " + eventType);
+    console.log("eventSequence: " + eventSequence);
+    console.log("selectedOrigin: " + selectedOriginId);
+    console.log("selectedDestination: " + selectedDestinationId);
+    console.log("zoomLevel: " + zoomLevel);
+    console.log("mapBounds: ", mapBounds);
+    console.log("");
+
+    // Increment eventSequence
+    eventSequence += 1
+};
