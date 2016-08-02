@@ -489,7 +489,6 @@ function createUserID() {
 var userID = createUserID();
 ga('set', 'dimension1', userID); // session-scoped for GA, only set once, the other dimensions are hit-scope, reset every time
 
-var eventSequence = 0;
 var zoomLevel = map.getZoom();
 var mapBounds = map.getBounds().toBBoxString(); // form is 'southwest_lng,southwest_lat,northeast_lng,northeast_lat'
 
@@ -509,24 +508,16 @@ var pushMapState = function (eventType) {
     var eventTime = new Date().getTime();
     var eventType = eventType;
 
+    var globalState= {
+        zoomLevel: zoomLevel,
+        boundingBox: mapBounds,
+        selOrigin: selectedOriginId,
+        selDestination: selectedDestinationId
+    }
+
     ga('set', 'dimension2', eventTime);
     ga('set', 'dimension3', eventType);
-    ga('set', 'dimension4', eventSequence);
-    ga('set', 'dimension5', zoomLevel);
-    ga('set', 'dimension6', mapBounds);
-
-    // Undefined dimensions don't get sent to GA so need to make a string if they're undefined
-    if (selectedOriginId) {
-        ga('set', 'dimension7', selectedOriginId);
-    } else {
-        ga('set', 'dimension7', 'NULL')
-    }
-
-    if (selectedDestinationId) {
-        ga('set', 'dimension8', selectedDestinationId);
-    } else {
-        ga('set', 'dimension8', 'NULL')
-    }
+    ga('set', 'dimension4', globalState);
 
     ga('send', 'event', 'controlTool', 'mapInteraction');
 
@@ -534,13 +525,6 @@ var pushMapState = function (eventType) {
     console.log("UserID: " + userID);
     console.log("eventTime: " + eventTime);
     console.log("eventType: " + eventType);
-    console.log("eventSequence: " + eventSequence);
-    console.log("selectedOrigin: " + selectedOriginId);
-    console.log("selectedDestination: " + selectedDestinationId);
-    console.log("zoomLevel: " + zoomLevel);
-    console.log("mapBounds: ", mapBounds);
+    console.log(globalState);
     console.log("");
-
-    // Increment eventSequence
-    eventSequence += 1
 };
