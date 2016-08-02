@@ -513,7 +513,9 @@ var pushMapState = function (eventType) {
         boundingBox: mapBounds,
         selOrigin: selectedOriginId,
         selDestination: selectedDestinationId
-    }
+    };
+
+    appState = JSON.stringify(appState);
 
     ga('set', 'dimension2', eventTime);
     ga('set', 'dimension3', eventType);
