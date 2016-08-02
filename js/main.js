@@ -508,7 +508,7 @@ var pushMapState = function (eventType) {
     var eventTime = new Date().getTime();
     var eventType = eventType;
 
-    var globalState= {
+    var appState= {
         zoomLevel: zoomLevel,
         boundingBox: mapBounds,
         selOrigin: selectedOriginId,
@@ -517,7 +517,7 @@ var pushMapState = function (eventType) {
 
     ga('set', 'dimension2', eventTime);
     ga('set', 'dimension3', eventType);
-    ga('set', 'dimension4', globalState);
+    ga('set', 'dimension4', appState);
 
     ga('send', 'event', 'controlTool', 'mapInteraction');
 
@@ -525,6 +525,6 @@ var pushMapState = function (eventType) {
     console.log("UserID: " + userID);
     console.log("eventTime: " + eventTime);
     console.log("eventType: " + eventType);
-    console.log(globalState);
+    console.log(appState);
     console.log("");
 };
