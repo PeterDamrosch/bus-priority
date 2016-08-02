@@ -521,8 +521,19 @@ var pushMapState = function (eventType) {
     ga('set', 'dimension4', eventSequence);
     ga('set', 'dimension5', zoomLevel);
     ga('set', 'dimension6', mapBounds);
-    ga('set', 'dimension7', selectedOriginId);
-    ga('set', 'dimension8', selectedDestinationId);
+
+    // Undefined dimensions don't get sent to GA so need to make a string if they're undefined
+    if (selectedOriginId) {
+        ga('set', 'dimension7', selectedOriginId);
+    } else {
+        ga('set', 'dimension7', 'NULL')
+    }
+
+    if (selectedDestinationId) {
+        ga('set', 'dimension8', selectedDestinationId);
+    } else {
+        ga('set', 'dimension8', 'NULL')
+    }
 
     ga('send', 'event', 'controlTool', 'mapInteraction');
 
