@@ -509,10 +509,10 @@ var pushMapState = function (eventType) {
     var eventType = eventType;
 
     var appStateObject= {
-        zoomLevel: zoomLevel,
-        boundingBox: mapBounds,
-        selOrigin: selectedOriginId,
-        selDestination: selectedDestinationId
+        zoom: zoomLevel,
+        box: mapBounds,
+        origin: selectedOriginId,
+        dest: selectedDestinationId
     };
 
     appStateString = JSON.stringify(appStateObject);
