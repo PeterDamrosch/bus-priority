@@ -492,11 +492,8 @@ ga('set', 'dimension1', userID); // session-scoped for GA, only set once, the ot
 var eventSequence = 0;
 var zoomLevel = map.getZoom();
 var mapBounds = map.getBounds().toBBoxString(); // form is 'southwest_lng,southwest_lat,northeast_lng,northeast_lat'
-//                                                  there are also a bunch of others like getEash() getSouthEast if that's easier
-
 
 // Event Listener 1 - Move/Zoom (every zoom ends with a leaflet moveend event, so map.on("movend") should capture both
-
 map.on("moveend", onMoveend);
 function onMoveend() {
     zoomLevel = map.getZoom();
@@ -504,13 +501,9 @@ function onMoveend() {
     pushMapState("moveend")
 };
 
-
-// Even Listener 3 + 4 are select origin and destination, implemented above
-
-
+// Even Listener 2 are select origin and destination, implemented above
 
 // Function to push current map state to Google Analytics (right now just logging)
-
 var pushMapState = function (eventType) {
 
     var eventTime = new Date().getTime();
